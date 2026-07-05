@@ -1,15 +1,8 @@
 <div align="center">
   <img src="zoom-clone/public/favicon.svg" width="120" alt="MeetFlow Logo"/>
-  <h1>⚡ MeetFlow</h1>
+  <h1> MeetFlow</h1>
   <p><strong>A Real-Time, Neo-Brutalist Video Conferencing Platform</strong></p>
-  
-  <p>
-    <a href="#-overview">Overview</a> •
-    <a href="#-current-features">Features</a> •
-    <a href="#-architecture">Architecture</a> •
-    <a href="#-getting-started">Getting Started</a> •
-    <a href="#-roadmap">Roadmap</a>
-  </p>
+
 
   <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB" alt="React" />
   <img src="https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -21,11 +14,11 @@
 
 ---
 
-## 🚀 Welcome to MeetFlow
+##  Welcome to MeetFlow
 
 **MeetFlow** is a modern, real-time video conferencing platform built to explore browser-based communication, peer-to-peer media streaming, and real-time collaboration. With a bold, agency-grade **neo-brutalist** design system, MeetFlow prioritizes both aesthetic impact and seamless functionality.
 
-> **🚧 Status:** Active Development
+> ** Status:** Active Development
 
 <br>
 
@@ -39,20 +32,20 @@
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
 MeetFlow provides a fast and responsive meeting experience where users can:
 
-* ⚡ **Instant Meetings:** Start a new meeting with a single click.
-* 🔗 **Join via Code:** Easily join an active room using a unique code.
-* 🎥 **Pre-Join Screen:** Preview camera and microphone before entering the room.
-* 🎙️ **Hardware Controls:** Tactile, interactive buttons to toggle mic and camera states.
-* 💅 **Custom Neo-Brutalist UI:** A heavy, bold, high-contrast user interface that stands out.
-* ⚡ **Real-Time Communication:** Fast, low-latency audio/video streaming via WebRTC (Coming soon!).
+*  **Instant Meetings:** Start a new meeting with a single click.
+*  **Join via Code:** Easily join an active room using a unique code.
+*  **Pre-Join Screen:** Preview camera and microphone before entering the room.
+*  **Hardware Controls:** Tactile, interactive buttons to toggle mic and camera states.
+*  **Custom Neo-Brutalist UI:** A heavy, bold, high-contrast user interface that stands out.
+*  **Real-Time Communication:** Fast, low-latency audio/video streaming via WebRTC (Coming soon!).
 
 ---
 
-## 🖼️ Application Flow & Screens
+##  Application Flow & Screens
 
 <div align="center">
   <img src="zoom-clone/public/3.png" alt="MeetFlow Meeting Interface" width="800" style="border: 4px solid #000; border-radius: 8px; box-shadow: 8px 8px 0px 0px #000;"/>
@@ -77,7 +70,7 @@ graph TD;
 
 ---
 
-## 🏗️ Technical Architecture
+##  Technical Architecture
 
 MeetFlow cleanly separates real-time signaling from peer-to-peer media communication.
 
@@ -101,7 +94,7 @@ sequenceDiagram
     Server-->>User B: ICE Candidate
     User B->>Server: ICE Candidate
     Server-->>User A: ICE Candidate
-    Note over User A,User B: ⚡ WebRTC Peer Connection Established ⚡
+    Note over User A,User B:  WebRTC Peer Connection Established 
 ```
 
 ---
@@ -138,32 +131,6 @@ npm install
 npm run dev
 ```
 > The signaling server runs at `http://localhost:4000` (or your defined PORT)
-
----
-
-## 🛣️ Development Roadmap
-
-### ✅ Version 0 & 1 — UI & Local Media
-* [x] Bold neo-brutalist landing page & routing
-* [x] Dynamic room ID generation
-* [x] Pre-join preview screen
-* [x] Camera & microphone hardware access
-* [x] Toggle controls & cleanups
-
-### 🔄 Version 2 & 3 — Real-Time WebRTC (In Progress)
-* [x] Signaling server foundation
-* [x] Socket connection setup
-* [ ] RTCPeerConnection initialization
-* [ ] SDP offer/answer exchange
-* [ ] ICE candidate negotiation
-* [ ] Remote media rendering
-
-### 🔮 Upcoming Versions
-* **v4:** Multi-User Conferencing Grid
-* **v5:** Real-Time In-Meeting Chat
-* **v6:** Screen Sharing
-* **v7:** Participant Management System
-* **v8:** Host Controls (Mute, Kick, Lock Room)
 
 ---
 
