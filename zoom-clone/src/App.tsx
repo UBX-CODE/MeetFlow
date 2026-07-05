@@ -1,16 +1,16 @@
-import {BrowserRouter, Routes, Route} from "react-router-dom";
-import HomePage from "./pages/pages/HomePage";
-import MeetingPage from "./pages/pages/MeetingPage";
-import PreJoinPage from "./pages/pages/PreJoinPage";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import HomePage from "./pages/HomePage";
+import MeetingPage from "./pages/MeetingPage";
+import PreJoinPage from "./pages/PreJoinPage";
 
-function App(){
+function App() {
   return (
     <BrowserRouter>
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/pre-join" element={<PreJoinPage />} />
-      <Route path="/meeting/:roomId" element={<MeetingPage />} />
-    </Routes>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/pre-join" element={<PreJoinPage />} />
+        <Route path="/meeting/:roomId" element={<MeetingPage />} />
+      </Routes>
     </BrowserRouter>
   )
 }

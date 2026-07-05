@@ -8,6 +8,8 @@ import {
   PhoneOff,
 } from "lucide-react";
 
+import { socket } from "../socket";
+
 type MeetingState = {
   name?: string;
   isMicOn?: boolean;
@@ -33,6 +35,37 @@ export default function MeetingPage() {
   );
 
   const name = state?.name ?? "Guest";
+
+  useEffect(() => {
+  if (!roomId) return;
+
+  socket.connect();
+
+  const handleConnect = () => {
+    console.log("Connected to server:", socket.id);
+
+    socket.emit("join-room", roomId);
+  };
+
+  const handleUserJoined = (userId: string) => {
+    console.log("New user joined:", userId);
+  };
+
+  socket.on("connect", handleConnect);
+  socket.on("user-joined", handleUserJoined);
+
+  // Important:
+  // socket pehle se connected ho sakta hai
+  if (socket.connected) {
+    handleConnect();
+  }
+
+  return () => {
+    socket.off("connect", handleConnect);
+    socket.off("user-joined", handleUserJoined);
+    socket.disconnect();
+  };
+}, [roomId]);
 
   useEffect(() => {
     const startMeetingMedia = async () => {
@@ -115,15 +148,15 @@ export default function MeetingPage() {
         </h1>
 
         <div className="flex items-center gap-4">
-           <div className="bg-black text-white px-4 py-2 font-bold uppercase tracking-wider text-sm">
-             Room: {roomId}
-           </div>
+          <div className="bg-black text-white px-4 py-2 font-bold uppercase tracking-wider text-sm">
+            Room: {roomId}
+          </div>
         </div>
       </header>
 
       {/* Video Area */}
       <section className="flex flex-1 flex-col items-center justify-center p-4 md:p-8 relative z-0 min-h-0 w-full">
-        
+
         {/* Background Grid Pattern */}
         <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '24px 24px' }}></div>
 
@@ -139,13 +172,13 @@ export default function MeetingPage() {
 
           {!isCameraOn && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#FF0055] text-black m-[-2px]">
-               {/* Decorative Geometric Elements */}
-               <div className="absolute top-6 left-6 flex gap-3 z-20">
-                 <div className="w-6 h-6 bg-black rounded-full"></div>
-                 <div className="w-6 h-6 bg-black rounded-full"></div>
-                 <div className="w-6 h-6 bg-black rounded-full"></div>
-               </div>
-               
+              {/* Decorative Geometric Elements */}
+              <div className="absolute top-6 left-6 flex gap-3 z-20">
+                <div className="w-6 h-6 bg-black rounded-full"></div>
+                <div className="w-6 h-6 bg-black rounded-full"></div>
+                <div className="w-6 h-6 bg-black rounded-full"></div>
+              </div>
+
               <div className="text-center z-10">
                 <div className="mx-auto flex h-40 w-40 items-center justify-center rounded-full bg-white text-7xl font-display uppercase border-[6px] border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
                   {name.charAt(0)}
@@ -170,11 +203,10 @@ export default function MeetingPage() {
           <div className="absolute bottom-0 left-0 w-full flex items-center justify-center gap-6 p-8 z-30 bg-gradient-to-t from-black/50 to-transparent">
             <button
               onClick={toggleMic}
-              className={`flex h-16 w-16 items-center justify-center rounded-full border-[4px] border-black transition-all hover:scale-105 active:scale-95 shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 ${
-                isMicOn
+              className={`flex h-16 w-16 items-center justify-center rounded-full border-[4px] border-black transition-all hover:scale-105 active:scale-95 shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 ${isMicOn
                   ? "bg-white text-black"
                   : "bg-[#FF3300] text-white"
-              }`}
+                }`}
             >
               {isMicOn ? (
                 <Mic size={28} strokeWidth={3} />
@@ -185,11 +217,10 @@ export default function MeetingPage() {
 
             <button
               onClick={toggleCamera}
-              className={`flex h-16 w-16 items-center justify-center rounded-full border-[4px] border-black transition-all hover:scale-105 active:scale-95 shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 ${
-                isCameraOn
+              className={`flex h-16 w-16 items-center justify-center rounded-full border-[4px] border-black transition-all hover:scale-105 active:scale-95 shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 ${isCameraOn
                   ? "bg-white text-black"
                   : "bg-[#0055FF] text-white"
-              }`}
+                }`}
             >
               {isCameraOn ? (
                 <Video size={28} strokeWidth={3} />
