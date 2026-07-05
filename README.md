@@ -2,13 +2,7 @@
   <img src="zoom-clone/public/favicon.svg" width="120" alt="MeetFlow Logo"/>
   <h1> MeetFlow</h1>
   <p><strong>A Real-Time, Neo-Brutalist Video Conferencing Platform</strong></p>
-  
-  <p>
-    <a href="#-overview">Overview</a> •
-    <a href="#-current-features">Features</a> •
-    <a href="#-architecture">Architecture</a> •
-    <a href="#-getting-started">Getting Started</a> •
-  </p>
+
 
   <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB" alt="React" />
   <img src="https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
