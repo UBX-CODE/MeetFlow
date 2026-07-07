@@ -3,9 +3,9 @@
   <h1> MeetFlow</h1>
   <p><strong>A Real-Time, Neo-Brutalist Video Conferencing Platform</strong></p>
 
-  <br>
+  
   <img src="zoom-clone/src/assets/Calling%20Call%20Me%20GIF.gif" width="200" alt="Call Me" style="border-radius: 8px;"/>
-  <br><br>
+  <br>
 
   <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB" alt="React" />
   <img src="https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
