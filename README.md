@@ -137,7 +137,7 @@ npm run dev
 
 ---
 
-## ⚠️ Current Limitations
+##  Current Limitations
 
 As MeetFlow is under active development, note the following:
 * Currently heavily focused on a peer-to-peer (mesh) architecture.
@@ -146,7 +146,7 @@ As MeetFlow is under active development, note the following:
 
 ---
 
-## 👨‍💻 Author
+##  Author
 
 **UBX-CODE**
 * GitHub: [@UBX-CODE](https://github.com/UBX-CODE)
