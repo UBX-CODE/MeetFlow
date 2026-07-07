@@ -3,40 +3,92 @@ import http from "http";
 import cors from "cors";
 import { Server } from "socket.io";
 
+// 1. Express app create
+
 const app = express();
+
+// 2. HTTP server create
+
 const server = http.createServer(app);
 
-app.use(cors({
-    origin: "http://localhost:5173",
-}));
+// 3. Express CORS configuration
 
-const io = new Server(server,{
-    cors:{
-        origin: "http://localhost:5173",
-        methods: ["GET", "POST"],
-    },
+app.use(
+  cors({origin: "http://localhost:5173",})
+);
+
+// 4. Socket.IO server create
+
+const io = new Server(server, {
+  cors: {origin: "http://localhost:5173", methods: ["GET", "POST"]},
 });
+
+// 5. Basic test route
 
 app.get("/", (_req, res) => {
-    res.send("MeetFlow signalong server is running...")
+  res.send("MeetFlow signaling server is running");
 });
 
+// 6. Socket.IO connection
+
 io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
+  console.log("User connected:", socket.id);
 
-    socket.on("join-room", (roomId: string) => {
-        socket.join(roomId);
-        console.log(`User ${socket.id} joined room ${roomId}`);
-        
-        socket.to(roomId).emit("user-joined", socket.id);
-    })
+  // A. JOIN ROOM
 
-    socket.on("disconnect", () => {
-        console.log("User disconnected:", socket.id);
-    })
-})
-const PORT = process.env.PORT || 4000;
+  socket.on("join-room", (roomId: string) => {
+    socket.join(roomId);
 
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(
+      `User ${socket.id} joined room ${roomId}`
+    );
+
+    // Same room ke existing users ko batao
+    // ki ek new user join hua hai
+    socket.to(roomId).emit(
+      "user-joined",
+      socket.id
+    );
+  });
+
+  // B. FORWARD WEBRTC OFFER
+
+  socket.on("offer",({target,offer}: {
+      target: string;
+      offer: RTCSessionDescriptionInit;
+    }) => {
+      console.log(`Forwarding offer from ${socket.id} to ${target}`);
+
+      io.to(target).emit("offer", {sender: socket.id,offer});
+    }
+  );
+
+  // C. FORWARD WEBRTC ANSWER
+
+  socket.on("answer",({target,answer}: {
+      target: string;
+      answer: RTCSessionDescriptionInit;
+    }) => {
+      console.log(`Forwarding answer from ${socket.id} to ${target}` );
+
+      io.to(target).emit("answer", {sender: socket.id,answer});
+    }
+  );
+
+  // D. DISCONNECT
+
+  socket.on("disconnect", () => {
+    console.log(
+      "User disconnected:",
+      socket.id
+    );
+  });
+});
+
+// 7. Start server
+
+server.listen(3001, () => {
+  console.log(
+    "Signaling server running on http://localhost:3001"
+  );
 });
