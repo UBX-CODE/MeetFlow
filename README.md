@@ -1,9 +1,9 @@
 <div align="center">
-  <img src="zoom-clone/public/favicon.svg" width="120" alt="MeetFlow Logo"/>
+  <img src="client/public/favicon.svg" width="120" alt="MeetFlow Logo"/>
   <h1> MeetFlow</h1>
   <p><strong>A Real-Time, Neo-Brutalist Video Conferencing Platform</strong></p>
 
-  <img src="zoom-clone/src/assets/Calling%20Call%20Me%20GIF.gif" width="200" alt="Call Me" style="border-radius: 8px; margin: 16px 0;"/>
+  <img src="client/src/assets/Calling%20Call%20Me%20GIF.gif" width="200" alt="Call Me" style="border-radius: 8px; margin: 16px 0;"/>
 
   <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB" alt="React" />
   <img src="https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -24,7 +24,7 @@
 <br>
 
 <div align="center">
-  <img src="zoom-clone/public/heropage.png" alt="MeetFlow Landing Page" width="800" style="border: 4px solid #000; border-radius: 8px; box-shadow: 8px 8px 0px 0px #000;"/>
+  <img src="client/public/heropage.png" alt="MeetFlow Landing Page" width="800" style="border: 4px solid #000; border-radius: 8px; box-shadow: 8px 8px 0px 0px #000;"/>
   <br>
   <em>The sleek, modern, neo-brutalist landing experience.</em>
 </div>
@@ -49,7 +49,7 @@ MeetFlow provides a fast and responsive meeting experience where users can:
 ##  Application Flow & Screens
 
 <div align="center">
-  <img src="zoom-clone/public/3.png" alt="MeetFlow Meeting Interface" width="800" style="border: 4px solid #000; border-radius: 8px; box-shadow: 8px 8px 0px 0px #000;"/>
+  <img src="client/public/3.png" alt="MeetFlow Meeting Interface" width="800" style="border: 4px solid #000; border-radius: 8px; box-shadow: 8px 8px 0px 0px #000;"/>
   <br>
   <em>Immersive video conferencing interface.</em>
 </div>
