@@ -43,7 +43,6 @@ export default function MeetingPage() {
 
   const handleConnect = () => {
     console.log("Connected to server:", socket.id);
-
     socket.emit("join-room", roomId);
   };
 

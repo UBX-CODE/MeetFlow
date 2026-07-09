@@ -4,33 +4,25 @@ import cors from "cors";
 import { Server } from "socket.io";
 
 // 1. Express app create
-
 const app = express();
 
 // 2. HTTP server create
-
 const server = http.createServer(app);
 
 // 3. Express CORS configuration
-
-app.use(
-  cors({origin: "http://localhost:5173",})
-);
+app.use(cors({origin: "http://localhost:5173",}));
 
 // 4. Socket.IO server create
-
 const io = new Server(server, {
   cors: {origin: "http://localhost:5173", methods: ["GET", "POST"]},
 });
 
 // 5. Basic test route
-
 app.get("/", (_req, res) => {
   res.send("MeetFlow signaling server is running");
 });
 
 // 6. Socket.IO connection
-
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
@@ -39,9 +31,7 @@ io.on("connection", (socket) => {
   socket.on("join-room", (roomId: string) => {
     socket.join(roomId);
 
-    console.log(
-      `User ${socket.id} joined room ${roomId}`
-    );
+    console.log(`User ${socket.id} joined room ${roomId}`);
 
     // Same room ke existing users ko batao
     // ki ek new user join hua hai
@@ -52,7 +42,6 @@ io.on("connection", (socket) => {
   });
 
   // B. FORWARD WEBRTC OFFER
-
   socket.on("offer",({target,offer}: {
       target: string;
       offer: RTCSessionDescriptionInit;
@@ -64,7 +53,6 @@ io.on("connection", (socket) => {
   );
 
   // C. FORWARD WEBRTC ANSWER
-
   socket.on("answer",({target,answer}: {
       target: string;
       answer: RTCSessionDescriptionInit;
@@ -76,7 +64,6 @@ io.on("connection", (socket) => {
   );
 
   // D. DISCONNECT
-
   socket.on("disconnect", () => {
     console.log(
       "User disconnected:",
@@ -86,7 +73,6 @@ io.on("connection", (socket) => {
 });
 
 // 7. Start server
-
 server.listen(3001, () => {
   console.log(
     "Signaling server running on http://localhost:3001"
