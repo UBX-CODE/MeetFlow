@@ -3,9 +3,7 @@
   <h1> MeetFlow</h1>
   <p><strong>A Real-Time, Neo-Brutalist Video Conferencing Platform</strong></p>
 
-  <br>
-  <img src="zoom-clone/src/assets/Calling%20Call%20Me%20GIF.gif" width="200" alt="Call Me" style="border-radius: 8px;"/>
-  <br><br>
+  <img src="zoom-clone/src/assets/Calling%20Call%20Me%20GIF.gif" width="200" alt="Call Me" style="border-radius: 8px; margin: 16px 0;"/>
 
   <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB" alt="React" />
   <img src="https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
@@ -137,7 +135,7 @@ npm run dev
 
 ---
 
-## ⚠️ Current Limitations
+##  Current Limitations
 
 As MeetFlow is under active development, note the following:
 * Currently heavily focused on a peer-to-peer (mesh) architecture.
@@ -146,7 +144,7 @@ As MeetFlow is under active development, note the following:
 
 ---
 
-## 👨‍💻 Author
+##  Author
 
 **UBX-CODE**
 * GitHub: [@UBX-CODE](https://github.com/UBX-CODE)
