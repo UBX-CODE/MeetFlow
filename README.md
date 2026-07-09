@@ -3,23 +3,25 @@
   <h1> MeetFlow</h1>
   <p><strong>A Real-Time, Neo-Brutalist Video Conferencing Platform</strong></p>
 
-  <img src="client/src/assets/Calling%20Call%20Me%20GIF.gif" width="200" alt="Call Me" style="border-radius: 8px; margin: 16px 0;"/>
+  <img src="client/src/assets/Calling%20Call%20Me%20GIF.gif" width="200" alt="Call Me" style="border-radius: 8px; margin: 16px auto; display: block;"/>
 
-  <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB" alt="React" />
-  <img src="https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="TailwindCSS" />
-  <img src="https://img.shields.io/badge/Socket.io-black?style=for-the-badge&logo=socket.io&badgeColor=010101" alt="Socket.io" />
-  <img src="https://img.shields.io/badge/WebRTC-333333?style=for-the-badge&logo=webrtc&logoColor=white" alt="WebRTC" />
-  <img src="https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
+  <div>
+    <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB" alt="React" />
+    <img src="https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="TailwindCSS" />
+    <img src="https://img.shields.io/badge/Socket.io-black?style=for-the-badge&logo=socket.io&badgeColor=010101" alt="Socket.io" />
+    <img src="https://img.shields.io/badge/WebRTC-333333?style=for-the-badge&logo=webrtc&logoColor=white" alt="WebRTC" />
+    <img src="https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
+  </div>
 </div>
 
 ---
 
-##  Welcome to MeetFlow
+## Welcome to MeetFlow
 
 **MeetFlow** is a modern, real-time video conferencing platform built to explore browser-based communication, peer-to-peer media streaming, and real-time collaboration. With a bold, agency-grade **neo-brutalist** design system, MeetFlow prioritizes both aesthetic impact and seamless functionality.
 
-> ** Status:** Active Development
+> **Status:** Active Development
 
 <br>
 
@@ -33,7 +35,7 @@
 
 ---
 
-##  Key Features
+## Key Features
 
 MeetFlow provides a fast and responsive meeting experience where users can:
 
@@ -46,7 +48,7 @@ MeetFlow provides a fast and responsive meeting experience where users can:
 
 ---
 
-##  Application Flow & Screens
+## Application Flow & Screens
 
 <div align="center">
   <img src="client/public/3.png" alt="MeetFlow Meeting Interface" width="800" style="border: 4px solid #000; border-radius: 8px; box-shadow: 8px 8px 0px 0px #000;"/>
@@ -71,7 +73,7 @@ graph TD;
 
 ---
 
-##  Technical Architecture
+## Technical Architecture
 
 MeetFlow cleanly separates real-time signaling from peer-to-peer media communication.
 
@@ -118,7 +120,7 @@ cd MeetFlow
 ### 2. Start the Frontend (Client)
 
 ```bash
-cd zoom-clone
+cd client
 npm install
 npm run dev
 ```
@@ -135,7 +137,7 @@ npm run dev
 
 ---
 
-##  Current Limitations
+## Current Limitations
 
 As MeetFlow is under active development, note the following:
 * Currently heavily focused on a peer-to-peer (mesh) architecture.
@@ -144,7 +146,7 @@ As MeetFlow is under active development, note the following:
 
 ---
 
-##  Author
+## Author
 
 **UBX-CODE**
 * GitHub: [@UBX-CODE](https://github.com/UBX-CODE)
