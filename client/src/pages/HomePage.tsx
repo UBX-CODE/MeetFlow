@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Video, ArrowRight } from "lucide-react";
+import { Video, ArrowRight, MonitorUp, Lock, MessageSquare } from "lucide-react";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -41,15 +41,16 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Content */}
-      <section className="flex-1 flex flex-col items-center justify-center px-6 pt-16 pb-24 relative z-10 w-full max-w-[1400px] mx-auto">
+      <section className="flex-1 flex flex-col items-center justify-center px-6 pt-1 pb-24 relative z-10 w-full max-w-[1400px] mx-auto">
         <div className="w-full text-center mb-16">
-          <h1 className="font-display text-[14vw] md:text-[11vw] leading-[0.85] uppercase text-[#111111] mb-8">
-            Stop Guessing.<br />
-            <span className="text-[#FF3300]">Start Meeting.</span>
+          <h1 className="font-display font-medium text-[14vw] md:text-[11vw] leading-[0.95] uppercase text-[#111111] mb-8 tracking-tighter">
+            Stop<br />
+            Guessing.<br />
+            <span className="text-[#FF3300]">Start<br />Meeting.</span>
           </h1>
           <p className="text-xl md:text-3xl font-medium max-w-3xl mx-auto mb-12 text-zinc-800 leading-snug">
             We turn scattered communication into a system that scales. 
-            HD video, zero friction, pure clarity.
+            Screen sharing, real-time chat, and full privacy.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 max-w-2xl mx-auto">
@@ -116,14 +117,14 @@ export default function HomePage() {
              {/* Background Grid Pattern */}
              <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '24px 24px' }}></div>
 
-             <div className="bg-[#0055FF] text-white font-display text-5xl px-8 py-3 -rotate-6 border-[4px] border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] uppercase tracking-wider relative z-10 hover:rotate-0 transition-transform cursor-default">
-               Systems
+             <div className="bg-[#0055FF] text-white font-display text-3xl md:text-4xl px-6 py-3 -rotate-6 border-[4px] border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] uppercase tracking-wider relative z-10 hover:rotate-0 transition-transform cursor-default text-center">
+               Screen Sharing
              </div>
-             <div className="bg-white text-black font-display text-6xl px-8 py-3 rotate-3 border-[4px] border-black uppercase tracking-wider relative z-10 shadow-[8px_8px_0_0_rgba(0,0,0,1)] hover:-rotate-3 transition-transform cursor-default">
-               Clarity
+             <div className="bg-white text-black font-display text-4xl md:text-5xl px-6 py-3 rotate-3 border-[4px] border-black uppercase tracking-wider relative z-10 shadow-[8px_8px_0_0_rgba(0,0,0,1)] hover:-rotate-3 transition-transform cursor-default text-center">
+               Real-Time<br />Chat
              </div>
-             <div className="bg-[#FF3300] text-white font-display text-5xl px-8 py-3 -rotate-2 border-[4px] border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] uppercase tracking-wider relative z-10 hover:rotate-2 transition-transform cursor-default">
-               Consistency
+             <div className="bg-[#FF3300] text-white font-display text-3xl md:text-4xl px-6 py-3 -rotate-2 border-[4px] border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)] uppercase tracking-wider relative z-10 hover:rotate-2 transition-transform cursor-default text-center">
+               Full Privacy
              </div>
           </div>
 
@@ -162,24 +163,84 @@ export default function HomePage() {
       {/* Marquee Banner */}
       <div className="w-full bg-black border-y-[4px] border-black overflow-hidden py-5 whitespace-nowrap flex relative z-10 mt-12">
          <div className="animate-marquee font-display text-5xl text-white uppercase tracking-wider flex items-center gap-12">
-            <span>Stop Guessing</span>
+            <span>Screen Sharing  </span>
             <span className="w-5 h-5 rounded-full bg-[#0055FF]"></span>
-            <span>Start Growing</span>
+            <span>Real-Time Chat  </span>
             <span className="w-5 h-5 rounded-full bg-[#FF0055]"></span>
-            <span>Zero Friction</span>
+            <span>Full Privacy  </span>
             <span className="w-5 h-5 rounded-full bg-[#0055FF]"></span>
-            <span>Pure Clarity</span>
+            <span>Screen Sharing  </span>
             <span className="w-5 h-5 rounded-full bg-[#FF0055]"></span>
-            <span>Stop Guessing</span>
+            <span>Real-Time Chat  </span>
             <span className="w-5 h-5 rounded-full bg-[#0055FF]"></span>
-            <span>Start Growing</span>
+            <span>Full Privacy  </span>
             <span className="w-5 h-5 rounded-full bg-[#FF0055]"></span>
-            <span>Zero Friction</span>
+            <span>Screen Sharing  </span>
             <span className="w-5 h-5 rounded-full bg-[#0055FF]"></span>
-            <span>Pure Clarity</span>
+            <span>Real-Time Chat  </span>
             <span className="w-5 h-5 rounded-full bg-[#FF0055]"></span>
          </div>
       </div>
+
+      {/* Features Section */}
+      <section className="w-full bg-white border-b-[4px] border-black py-24 px-6 md:px-12 relative z-10">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="flex flex-col items-center text-center mb-20">
+            <h2 className="font-display font-medium text-[10vw] md:text-[7vw] leading-[0.95] uppercase text-[#111111] mb-6 tracking-tighter">
+              Built for <span className="text-[#FF3300]">Performance.</span>
+            </h2>
+            <p className="text-xl md:text-2xl font-medium max-w-2xl text-zinc-800 leading-snug">
+              Every tool you need for seamless collaboration, wrapped in a system that gets out of your way.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Feature 1 */}
+            <div className="bg-[#F4F0E6] border-[4px] border-black p-8 shadow-[8px_8px_0_0_rgba(0,0,0,1)] hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all group flex flex-col">
+              <div className="w-16 h-16 bg-[#FF3300] rounded-full border-[4px] border-black mb-6 flex items-center justify-center text-white group-hover:-rotate-12 transition-transform">
+                <Video size={32} />
+              </div>
+              <h3 className="font-display text-3xl uppercase tracking-wider mb-4">HD Video</h3>
+              <p className="text-zinc-800 font-medium text-lg leading-relaxed flex-1">
+                Crystal clear 1080p video with low latency so you never miss a moment or a subtle expression.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="bg-[#F4F0E6] border-[4px] border-black p-8 shadow-[8px_8px_0_0_rgba(0,0,0,1)] hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all group flex flex-col">
+              <div className="w-16 h-16 bg-[#0055FF] rounded-full border-[4px] border-black mb-6 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                <MonitorUp size={32} />
+              </div>
+              <h3 className="font-display text-3xl uppercase tracking-wider mb-4">Screen Share</h3>
+              <p className="text-zinc-800 font-medium text-lg leading-relaxed flex-1">
+                Share your entire screen or specific application windows instantly with zero compression artifacts.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="bg-[#F4F0E6] border-[4px] border-black p-8 shadow-[8px_8px_0_0_rgba(0,0,0,1)] hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all group flex flex-col">
+              <div className="w-16 h-16 bg-[#FF0055] rounded-full border-[4px] border-black mb-6 flex items-center justify-center text-white group-hover:rotate-12 transition-transform">
+                <Lock size={32} />
+              </div>
+              <h3 className="font-display text-3xl uppercase tracking-wider mb-4">Secure Rooms</h3>
+              <p className="text-zinc-800 font-medium text-lg leading-relaxed flex-1">
+                End-to-end encryption with room codes and waiting rooms. Your data stays completely private.
+              </p>
+            </div>
+
+            {/* Feature 4 */}
+            <div className="bg-[#F4F0E6] border-[4px] border-black p-8 shadow-[8px_8px_0_0_rgba(0,0,0,1)] hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all group flex flex-col">
+              <div className="w-16 h-16 bg-black rounded-full border-[4px] border-white shadow-[0_0_0_4px_#000] mb-6 flex items-center justify-center text-white group-hover:scale-90 transition-transform">
+                <MessageSquare size={32} />
+              </div>
+              <h3 className="font-display text-3xl uppercase tracking-wider mb-4 mt-2">Real-Time Chat</h3>
+              <p className="text-zinc-800 font-medium text-lg leading-relaxed flex-1">
+                Drop links, notes, and messages seamlessly in the side panel without interrupting the conversation.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Get In Touch / Footer Section */}
       <footer className="w-full bg-[#111111] text-white pt-24 pb-12 px-6 md:px-12 relative z-10 border-t-[4px] border-black mt-[-4px]">
