@@ -25,16 +25,27 @@ export default function MeetingPage() {
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
 
-  const [isMicOn, setIsMicOn] = useState(
-    state?.isMicOn ?? true
-  );
-
-  const [isCameraOn, setIsCameraOn] = useState(
-    state?.isCameraOn ?? true
-  );
+  const [isMicOn, setIsMicOn] = useState(state?.isMicOn ?? true);
+  const [isCameraOn, setIsCameraOn] = useState(state?.isCameraOn ?? true);
 
   const name = state?.name ?? "Guest";
+
+  const createPeerConnection = () => {
+  const peerConnection = new RTCPeerConnection({
+    iceServers: [
+      {
+        urls: "stun:stun.l.google.com:19302",
+      },
+    ],
+  });
+
+  peerConnectionRef.current = peerConnection;
+
+  return peerConnection;
+};
+
 
   useEffect(() => {
   if (!roomId) return;
@@ -46,12 +57,53 @@ export default function MeetingPage() {
     socket.emit("join-room", roomId);
   };
 
-  const handleUserJoined = (userId: string) => {
-    console.log("New user joined:", userId);
-  };
+  const handleUserJoined = async (userId: string) => {
+  console.log("New user joined:", userId);
 
+  if (!streamRef.current) {
+    console.log("Media stream not ready");
+    return;
+  }
+
+  const peerConnection = createPeerConnection();
+
+  streamRef.current.getTracks().forEach((track) => {
+    peerConnection.addTrack(track, streamRef.current!);
+    });
+
+  const offer = await peerConnection.createOffer();
+
+  await peerConnection.setLocalDescription(offer);
+
+  socket.emit("offer", {
+    target: userId,
+    offer,
+  });
+};
+const handleOffer = async ({sender, offer}: {sender: string, offer: RTCSessionDescriptionInit}) => {
+  console.log("Offer received from:", sender);
+  if (!streamRef.current) {
+  console.log("Media stream not ready");
+  return;
+}
+  const peerConnection = createPeerConnection();
+  streamRef.current.getTracks().forEach((track) => {
+    peerConnection.addTrack(track, streamRef.current!);
+  });
+
+  await peerConnection.setRemoteDescription(offer);
+
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+
+  socket.emit("answer", {
+    target: sender,
+    answer,
+  });
+}
   socket.on("connect", handleConnect);
   socket.on("user-joined", handleUserJoined);
+  socket.on("offer", handleOffer);
 
   // Important:
   // socket pehle se connected ho sakta hai
@@ -62,6 +114,7 @@ export default function MeetingPage() {
   return () => {
     socket.off("connect", handleConnect);
     socket.off("user-joined", handleUserJoined);
+    socket.off("offer", handleOffer);
     socket.disconnect();
   };
 }, [roomId]);
@@ -69,8 +122,7 @@ export default function MeetingPage() {
   useEffect(() => {
     const startMeetingMedia = async () => {
       try {
-        const stream =
-          await navigator.mediaDevices.getUserMedia({
+        const stream = await navigator.mediaDevices.getUserMedia({
             video: true,
             audio: true,
           });
@@ -93,25 +145,19 @@ export default function MeetingPage() {
           videoRef.current.srcObject = stream;
         }
       } catch (error) {
-        console.error(
-          "Meeting media error:",
-          error
-        );
+        console.error("Meeting media error:",error);
       }
     };
 
     startMeetingMedia();
 
     return () => {
-      streamRef.current
-        ?.getTracks()
-        .forEach((track) => track.stop());
+      streamRef.current?.getTracks().forEach((track) => track.stop());
     };
   }, []);
 
   const toggleMic = () => {
-    const audioTrack =
-      streamRef.current?.getAudioTracks()[0];
+    const audioTrack = streamRef.current?.getAudioTracks()[0];
 
     if (!audioTrack) return;
 
@@ -120,8 +166,7 @@ export default function MeetingPage() {
   };
 
   const toggleCamera = () => {
-    const videoTrack =
-      streamRef.current?.getVideoTracks()[0];
+    const videoTrack = streamRef.current?.getVideoTracks()[0];
 
     if (!videoTrack) return;
 
