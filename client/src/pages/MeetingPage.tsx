@@ -25,30 +25,48 @@ export default function MeetingPage() {
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const peerConnectionsRef = useRef<Record<string, RTCPeerConnection>>({});
 
   const [isMicOn, setIsMicOn] = useState(state?.isMicOn ?? true);
   const [isCameraOn, setIsCameraOn] = useState(state?.isCameraOn ?? true);
+  const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
+  const [isMediaReady, setIsMediaReady] = useState(false);
 
   const name = state?.name ?? "Guest";
 
-  const createPeerConnection = () => {
-  const peerConnection = new RTCPeerConnection({
-    iceServers: [
-      {
-        urls: "stun:stun.l.google.com:19302",
-      },
-    ],
-  });
+  const createPeerConnection = (targetUserId: string) => {
+    const peerConnection = new RTCPeerConnection({
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302",
+        },
+      ],
+    });
 
-  peerConnectionRef.current = peerConnection;
+    peerConnection.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit("ice-candidate", {
+          target: targetUserId,
+          candidate: event.candidate,
+        });
+      }
+    };
 
-  return peerConnection;
-};
+    peerConnection.ontrack = (event) => {
+      setRemoteStreams((prev) => ({
+        ...prev,
+        [targetUserId]: event.streams[0],
+      }));
+    };
+
+    peerConnectionsRef.current[targetUserId] = peerConnection;
+
+    return peerConnection;
+  };
 
 
   useEffect(() => {
-  if (!roomId) return;
+  if (!roomId || !isMediaReady) return;
 
   socket.connect();
 
@@ -65,7 +83,7 @@ export default function MeetingPage() {
     return;
   }
 
-  const peerConnection = createPeerConnection();
+  const peerConnection = createPeerConnection(userId);
 
   streamRef.current.getTracks().forEach((track) => {
     peerConnection.addTrack(track, streamRef.current!);
@@ -86,7 +104,7 @@ const handleOffer = async ({sender, offer}: {sender: string, offer: RTCSessionDe
   console.log("Media stream not ready");
   return;
 }
-  const peerConnection = createPeerConnection();
+  const peerConnection = createPeerConnection(sender);
   streamRef.current.getTracks().forEach((track) => {
     peerConnection.addTrack(track, streamRef.current!);
   });
@@ -101,9 +119,31 @@ const handleOffer = async ({sender, offer}: {sender: string, offer: RTCSessionDe
     answer,
   });
 }
+
+const handleAnswer = async ({ sender, answer }: { sender: string; answer: RTCSessionDescriptionInit }) => {
+  console.log("Answer received from:", sender);
+  const peerConnection = peerConnectionsRef.current[sender];
+  if (peerConnection) {
+    await peerConnection.setRemoteDescription(answer);
+  }
+};
+
+const handleIceCandidate = async ({ sender, candidate }: { sender: string; candidate: RTCIceCandidateInit }) => {
+  const peerConnection = peerConnectionsRef.current[sender];
+  if (peerConnection) {
+    try {
+      await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    } catch (e) {
+      console.error("Error adding received ice candidate", e);
+    }
+  }
+};
+
   socket.on("connect", handleConnect);
   socket.on("user-joined", handleUserJoined);
   socket.on("offer", handleOffer);
+  socket.on("answer", handleAnswer);
+  socket.on("ice-candidate", handleIceCandidate);
 
   // Important:
   // socket pehle se connected ho sakta hai
@@ -115,9 +155,11 @@ const handleOffer = async ({sender, offer}: {sender: string, offer: RTCSessionDe
     socket.off("connect", handleConnect);
     socket.off("user-joined", handleUserJoined);
     socket.off("offer", handleOffer);
+    socket.off("answer", handleAnswer);
+    socket.off("ice-candidate", handleIceCandidate);
     socket.disconnect();
   };
-}, [roomId]);
+}, [roomId, isMediaReady]);
 
   useEffect(() => {
     const startMeetingMedia = async () => {
@@ -144,6 +186,8 @@ const handleOffer = async ({sender, offer}: {sender: string, offer: RTCSessionDe
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
+        
+        setIsMediaReady(true);
       } catch (error) {
         console.error("Meeting media error:",error);
       }
@@ -182,6 +226,8 @@ const handleOffer = async ({sender, offer}: {sender: string, offer: RTCSessionDe
     navigate("/");
   };
 
+  const remoteCount = Object.keys(remoteStreams).length;
+
   return (
     <main className="flex h-screen flex-col bg-[#F4F0E6] text-[#111111] overflow-hidden selection:bg-[#FF3300] selection:text-white">
 
@@ -204,84 +250,114 @@ const handleOffer = async ({sender, offer}: {sender: string, offer: RTCSessionDe
         {/* Background Grid Pattern */}
         <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '24px 24px' }}></div>
 
-        <div className="relative w-full h-full max-w-[1400px] overflow-hidden border-[6px] border-black bg-black shadow-[12px_12px_0_0_rgba(0,0,0,1)] group rounded-3xl">
+        <div className={`relative w-full h-full max-w-[1400px] overflow-y-auto overflow-x-hidden border-[6px] border-black bg-black shadow-[12px_12px_0_0_rgba(0,0,0,1)] group rounded-3xl ${remoteCount >= 2 ? "grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-4 items-center" : "flex items-center justify-center"}`}>
 
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="h-full w-full object-cover"
-          />
-
-          {!isCameraOn && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#FF0055] text-black m-[-2px]">
-              {/* Decorative Geometric Elements */}
-              <div className="absolute top-6 left-6 flex gap-3 z-20">
-                <div className="w-6 h-6 bg-black rounded-full"></div>
-                <div className="w-6 h-6 bg-black rounded-full"></div>
-                <div className="w-6 h-6 bg-black rounded-full"></div>
+          {/* Remote Streams */}
+          {Object.entries(remoteStreams).map(([id, stream]) => (
+            <div key={id} className={`relative overflow-hidden bg-zinc-900 ${remoteCount === 1 ? "absolute inset-0 w-full h-full z-0" : "w-full aspect-video rounded-2xl border-[4px] border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)]"}`}>
+              <video
+                autoPlay
+                playsInline
+                ref={(el) => {
+                  if (el) el.srcObject = stream;
+                }}
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute top-4 left-4 bg-white border-[2px] border-black px-3 py-1 text-sm font-bold uppercase shadow-[2px_2px_0_0_rgba(0,0,0,1)] z-10">
+                Remote User
               </div>
+            </div>
+          ))}
 
-              <div className="text-center z-10">
-                <div className="mx-auto flex h-40 w-40 items-center justify-center rounded-full bg-white text-7xl font-display uppercase border-[6px] border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
-                  {name.charAt(0)}
+          {/* Local Stream */}
+          <div className={`relative overflow-hidden bg-black transition-all duration-300 ${
+            remoteCount === 0 ? "w-full h-full z-0" : 
+            remoteCount === 1 ? "absolute bottom-32 right-8 w-1/4 min-w-[200px] max-w-[320px] aspect-video z-20 border-[4px] border-white shadow-[8px_8px_0_0_rgba(255,255,255,1)] rounded-2xl" : 
+            "w-full aspect-video border-[4px] border-white shadow-[8px_8px_0_0_rgba(255,255,255,1)] rounded-2xl z-10"
+          }`}>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="h-full w-full object-cover"
+            />
+
+            {!isCameraOn && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#FF0055] text-black m-[-2px]">
+                {/* Decorative Geometric Elements */}
+                {remoteCount === 0 && (
+                  <div className="absolute top-6 left-6 flex gap-3 z-20">
+                    <div className="w-6 h-6 bg-black rounded-full"></div>
+                    <div className="w-6 h-6 bg-black rounded-full"></div>
+                    <div className="w-6 h-6 bg-black rounded-full"></div>
+                  </div>
+                )}
+
+                <div className="text-center z-10">
+                  <div className={`mx-auto flex ${remoteCount > 0 ? "h-16 w-16 text-3xl" : "h-40 w-40 text-7xl"} items-center justify-center rounded-full bg-white font-display uppercase border-[4px] border-black shadow-[6px_6px_0_0_rgba(0,0,0,1)]`}>
+                    {name.charAt(0)}
+                  </div>
+
+                  {remoteCount === 0 && (
+                    <p className="mt-10 font-display text-5xl uppercase tracking-wider bg-black text-white px-8 py-3 border-[4px] border-black -rotate-2 shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
+                      {name}
+                    </p>
+                  )}
                 </div>
-
-                <p className="mt-10 font-display text-5xl uppercase tracking-wider bg-black text-white px-8 py-3 border-[4px] border-black -rotate-2 shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
-                  {name}
-                </p>
               </div>
+            )}
+
+            {/* User Name Badge */}
+            {isCameraOn && (
+              <div className={`absolute ${remoteCount > 0 ? "top-3 left-3 text-sm px-3 py-1" : "top-6 left-6 text-lg px-5 py-3"} bg-white border-[3px] border-black font-bold uppercase tracking-wider shadow-[4px_4px_0_0_rgba(0,0,0,1)] flex items-center gap-3 z-20`}>
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-black"></div>
+                {name} (You)
+              </div>
+            )}
+          </div>
+
+          {/* Floating Controls */}
+          <div className="absolute bottom-0 left-0 w-full flex items-center justify-center gap-6 p-8 z-30 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none">
+            <div className="pointer-events-auto flex items-center gap-6">
+              <button
+                onClick={toggleMic}
+                className={`flex h-16 w-16 items-center justify-center rounded-full border-[4px] border-black transition-all hover:scale-105 active:scale-95 shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 ${isMicOn
+                    ? "bg-white text-black"
+                    : "bg-[#FF3300] text-white"
+                  }`}
+              >
+                {isMicOn ? (
+                  <Mic size={28} strokeWidth={3} />
+                ) : (
+                  <MicOff size={28} strokeWidth={3} />
+                )}
+              </button>
+
+              <button
+                onClick={toggleCamera}
+                className={`flex h-16 w-16 items-center justify-center rounded-full border-[4px] border-black transition-all hover:scale-105 active:scale-95 shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 ${isCameraOn
+                    ? "bg-white text-black"
+                    : "bg-[#0055FF] text-white"
+                  }`}
+              >
+                {isCameraOn ? (
+                  <Video size={28} strokeWidth={3} />
+                ) : (
+                  <VideoOff size={28} strokeWidth={3} />
+                )}
+              </button>
+
+              <div className="h-10 w-1 bg-white/50 rounded-full mx-2 hidden sm:block"></div>
+
+              <button
+                onClick={leaveMeeting}
+                className="flex items-center gap-3 h-16 px-8 items-center justify-center rounded-full border-[4px] border-black bg-black text-white hover:bg-[#FF3300] hover:text-white transition-colors font-bold uppercase tracking-widest shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1"
+              >
+                <PhoneOff size={24} strokeWidth={3} />
+                <span className="hidden sm:inline">Leave</span>
+              </button>
             </div>
-          )}
-
-          {/* User Name Badge */}
-          {isCameraOn && (
-            <div className="absolute top-6 left-6 bg-white border-[3px] border-black px-5 py-3 text-lg font-bold uppercase tracking-wider shadow-[4px_4px_0_0_rgba(0,0,0,1)] flex items-center gap-3 z-20">
-              <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse border-2 border-black"></div>
-              {name} (You)
-            </div>
-          )}
-
-          {/* Floating Controls (No separation) */}
-          <div className="absolute bottom-0 left-0 w-full flex items-center justify-center gap-6 p-8 z-30 bg-gradient-to-t from-black/50 to-transparent">
-            <button
-              onClick={toggleMic}
-              className={`flex h-16 w-16 items-center justify-center rounded-full border-[4px] border-black transition-all hover:scale-105 active:scale-95 shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 ${isMicOn
-                  ? "bg-white text-black"
-                  : "bg-[#FF3300] text-white"
-                }`}
-            >
-              {isMicOn ? (
-                <Mic size={28} strokeWidth={3} />
-              ) : (
-                <MicOff size={28} strokeWidth={3} />
-              )}
-            </button>
-
-            <button
-              onClick={toggleCamera}
-              className={`flex h-16 w-16 items-center justify-center rounded-full border-[4px] border-black transition-all hover:scale-105 active:scale-95 shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 ${isCameraOn
-                  ? "bg-white text-black"
-                  : "bg-[#0055FF] text-white"
-                }`}
-            >
-              {isCameraOn ? (
-                <Video size={28} strokeWidth={3} />
-              ) : (
-                <VideoOff size={28} strokeWidth={3} />
-              )}
-            </button>
-
-            <div className="h-10 w-1 bg-white/50 rounded-full mx-2 hidden sm:block"></div>
-
-            <button
-              onClick={leaveMeeting}
-              className="flex items-center gap-3 h-16 px-8 items-center justify-center rounded-full border-[4px] border-black bg-black text-white hover:bg-white hover:text-black transition-colors font-bold uppercase tracking-widest shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1"
-            >
-              <PhoneOff size={24} strokeWidth={3} />
-              <span className="hidden sm:inline">Leave</span>
-            </button>
           </div>
 
         </div>

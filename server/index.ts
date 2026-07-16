@@ -63,7 +63,16 @@ io.on("connection", (socket) => {
     }
   );
 
-  // D. DISCONNECT
+  // D. FORWARD ICE CANDIDATE
+  socket.on("ice-candidate", ({ target, candidate }: {
+    target: string;
+    candidate: RTCIceCandidateInit;
+  }) => {
+    console.log(`Forwarding ICE candidate from ${socket.id} to ${target}`);
+    io.to(target).emit("ice-candidate", { sender: socket.id, candidate });
+  });
+
+  // E. DISCONNECT
   socket.on("disconnect", () => {
     console.log(
       "User disconnected:",
@@ -71,6 +80,7 @@ io.on("connection", (socket) => {
     );
   });
 });
+
 
 // 7. Start server
 server.listen(3001, () => {
