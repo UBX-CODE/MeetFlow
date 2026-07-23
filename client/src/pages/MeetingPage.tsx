@@ -6,6 +6,15 @@ import {
   Video,
   VideoOff,
   PhoneOff,
+  Users,
+  MessageSquare,
+  MoreVertical,
+  Maximize,
+  Pin,
+  Share,
+  ArrowLeft,
+  X,
+  Send
 } from "lucide-react";
 
 import { socket } from "../socket";
@@ -16,6 +25,58 @@ type MeetingState = {
   isCameraOn?: boolean;
 };
 
+const ParticipantVideo = ({ participant, className = "" }: { participant: any, className?: string }) => {
+  return (
+    <div className={`relative overflow-hidden bg-zinc-900 group shadow-lg flex items-center justify-center ${className}`}>
+      {participant.isCameraOn ? (
+        <video
+          autoPlay
+          playsInline
+          muted={participant.isLocal}
+          ref={(el) => {
+            if (el && participant.stream) el.srcObject = participant.stream;
+          }}
+          className={`h-full w-full object-cover ${participant.isLocal ? 'scale-x-[-1]' : ''}`}
+        />
+      ) : (
+        <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">
+           <div className="flex h-20 w-20 sm:h-28 sm:w-28 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-3xl sm:text-5xl font-semibold text-white shadow-lg">
+             {participant.name.charAt(0).toUpperCase()}
+           </div>
+        </div>
+      )}
+
+      {/* Name and Mic Status Badge */}
+      <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 backdrop-blur-md border border-white/10 transition-opacity">
+        {!participant.isMicOn ? (
+          <div className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-red-500 text-white">
+            <MicOff size={12} />
+          </div>
+        ) : (
+          <div className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-black/50 text-white hidden group-hover:flex">
+             <Mic size={12} />
+          </div>
+        )}
+        <span className="text-xs sm:text-sm font-medium text-white tracking-wide">
+          {participant.name} {participant.isLocal ? "(You)" : ""}
+        </span>
+      </div>
+
+      {/* Top right floating actions */}
+      <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+         {participant.isLocal && (
+          <div className="flex items-center gap-1 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md border border-white/10">
+            Host <Pin size={12} className="ml-1" />
+          </div>
+         )}
+         <button className="flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md border border-white/10 hover:bg-black/80 transition-colors">
+           <Maximize size={14} />
+         </button>
+      </div>
+    </div>
+  );
+};
+
 export default function MeetingPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,7 +84,6 @@ export default function MeetingPage() {
 
   const state = location.state as MeetingState | null;
 
-  const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const peerConnectionsRef = useRef<Record<string, RTCPeerConnection>>({});
 
@@ -31,6 +91,9 @@ export default function MeetingPage() {
   const [isCameraOn, setIsCameraOn] = useState(state?.isCameraOn ?? true);
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
   const [isMediaReady, setIsMediaReady] = useState(false);
+  
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'chat' | 'participants'>('chat');
 
   const name = state?.name ?? "Guest";
 
@@ -64,132 +127,113 @@ export default function MeetingPage() {
     return peerConnection;
   };
 
-
   useEffect(() => {
-  if (!roomId || !isMediaReady) return;
+    if (!roomId || !isMediaReady) return;
 
-  socket.connect();
+    socket.connect();
 
-  const handleConnect = () => {
-    console.log("Connected to server:", socket.id);
-    socket.emit("join-room", roomId);
-  };
+    const handleConnect = () => {
+      console.log("Connected to server:", socket.id);
+      socket.emit("join-room", roomId);
+    };
 
-  const handleUserJoined = async (userId: string) => {
-  console.log("New user joined:", userId);
+    const handleUserJoined = async (userId: string) => {
+      console.log("New user joined:", userId);
 
-  if (!streamRef.current) {
-    console.log("Media stream not ready");
-    return;
-  }
+      if (!streamRef.current) return;
 
-  const peerConnection = createPeerConnection(userId);
+      const peerConnection = createPeerConnection(userId);
 
-  streamRef.current.getTracks().forEach((track) => {
-    peerConnection.addTrack(track, streamRef.current!);
-    });
+      streamRef.current.getTracks().forEach((track) => {
+        peerConnection.addTrack(track, streamRef.current!);
+      });
 
-  const offer = await peerConnection.createOffer();
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
 
-  await peerConnection.setLocalDescription(offer);
+      socket.emit("offer", {
+        target: userId,
+        offer,
+      });
+    };
 
-  socket.emit("offer", {
-    target: userId,
-    offer,
-  });
-};
-const handleOffer = async ({sender, offer}: {sender: string, offer: RTCSessionDescriptionInit}) => {
-  console.log("Offer received from:", sender);
-  if (!streamRef.current) {
-  console.log("Media stream not ready");
-  return;
-}
-  const peerConnection = createPeerConnection(sender);
-  streamRef.current.getTracks().forEach((track) => {
-    peerConnection.addTrack(track, streamRef.current!);
-  });
+    const handleOffer = async ({ sender, offer }: { sender: string; offer: RTCSessionDescriptionInit }) => {
+      if (!streamRef.current) return;
 
-  await peerConnection.setRemoteDescription(offer);
+      const peerConnection = createPeerConnection(sender);
+      
+      streamRef.current.getTracks().forEach((track) => {
+        peerConnection.addTrack(track, streamRef.current!);
+      });
 
-  const answer = await peerConnection.createAnswer();
-  await peerConnection.setLocalDescription(answer);
+      await peerConnection.setRemoteDescription(offer);
 
-  socket.emit("answer", {
-    target: sender,
-    answer,
-  });
-}
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
 
-const handleAnswer = async ({ sender, answer }: { sender: string; answer: RTCSessionDescriptionInit }) => {
-  console.log("Answer received from:", sender);
-  const peerConnection = peerConnectionsRef.current[sender];
-  if (peerConnection) {
-    await peerConnection.setRemoteDescription(answer);
-  }
-};
+      socket.emit("answer", {
+        target: sender,
+        answer,
+      });
+    };
 
-const handleIceCandidate = async ({ sender, candidate }: { sender: string; candidate: RTCIceCandidateInit }) => {
-  const peerConnection = peerConnectionsRef.current[sender];
-  if (peerConnection) {
-    try {
-      await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-    } catch (e) {
-      console.error("Error adding received ice candidate", e);
+    const handleAnswer = async ({ sender, answer }: { sender: string; answer: RTCSessionDescriptionInit }) => {
+      const peerConnection = peerConnectionsRef.current[sender];
+      if (peerConnection) {
+        await peerConnection.setRemoteDescription(answer);
+      }
+    };
+
+    const handleIceCandidate = async ({ sender, candidate }: { sender: string; candidate: RTCIceCandidateInit }) => {
+      const peerConnection = peerConnectionsRef.current[sender];
+      if (peerConnection) {
+        try {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (e) {
+          console.error("Error adding received ice candidate", e);
+        }
+      }
+    };
+
+    socket.on("connect", handleConnect);
+    socket.on("user-joined", handleUserJoined);
+    socket.on("offer", handleOffer);
+    socket.on("answer", handleAnswer);
+    socket.on("ice-candidate", handleIceCandidate);
+
+    if (socket.connected) {
+      handleConnect();
     }
-  }
-};
 
-  socket.on("connect", handleConnect);
-  socket.on("user-joined", handleUserJoined);
-  socket.on("offer", handleOffer);
-  socket.on("answer", handleAnswer);
-  socket.on("ice-candidate", handleIceCandidate);
-
-  // Important:
-  // socket pehle se connected ho sakta hai
-  if (socket.connected) {
-    handleConnect();
-  }
-
-  return () => {
-    socket.off("connect", handleConnect);
-    socket.off("user-joined", handleUserJoined);
-    socket.off("offer", handleOffer);
-    socket.off("answer", handleAnswer);
-    socket.off("ice-candidate", handleIceCandidate);
-    socket.disconnect();
-  };
-}, [roomId, isMediaReady]);
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("user-joined", handleUserJoined);
+      socket.off("offer", handleOffer);
+      socket.off("answer", handleAnswer);
+      socket.off("ice-candidate", handleIceCandidate);
+      socket.disconnect();
+    };
+  }, [roomId, isMediaReady]);
 
   useEffect(() => {
     const startMeetingMedia = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true,
-          });
+          video: true,
+          audio: true,
+        });
 
         streamRef.current = stream;
 
-        // PreJoin state apply karo
         const audioTrack = stream.getAudioTracks()[0];
         const videoTrack = stream.getVideoTracks()[0];
 
-        if (audioTrack) {
-          audioTrack.enabled = isMicOn;
-        }
+        if (audioTrack) audioTrack.enabled = isMicOn;
+        if (videoTrack) videoTrack.enabled = isCameraOn;
 
-        if (videoTrack) {
-          videoTrack.enabled = isCameraOn;
-        }
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-        
         setIsMediaReady(true);
       } catch (error) {
-        console.error("Meeting media error:",error);
+        console.error("Meeting media error:", error);
       }
     };
 
@@ -202,166 +246,255 @@ const handleIceCandidate = async ({ sender, candidate }: { sender: string; candi
 
   const toggleMic = () => {
     const audioTrack = streamRef.current?.getAudioTracks()[0];
-
     if (!audioTrack) return;
-
     audioTrack.enabled = !audioTrack.enabled;
     setIsMicOn(audioTrack.enabled);
   };
 
   const toggleCamera = () => {
     const videoTrack = streamRef.current?.getVideoTracks()[0];
-
     if (!videoTrack) return;
-
     videoTrack.enabled = !videoTrack.enabled;
     setIsCameraOn(videoTrack.enabled);
   };
 
   const leaveMeeting = () => {
-    streamRef.current
-      ?.getTracks()
-      .forEach((track) => track.stop());
-
+    streamRef.current?.getTracks().forEach((track) => track.stop());
     navigate("/");
   };
 
-  const remoteCount = Object.keys(remoteStreams).length;
+  const toggleSidebar = (tab: 'chat' | 'participants') => {
+    if (isSidebarOpen && activeTab === tab) {
+      setIsSidebarOpen(false);
+    } else {
+      setIsSidebarOpen(true);
+      setActiveTab(tab);
+    }
+  };
+
+  const allParticipants = [
+    {
+      id: "local",
+      stream: streamRef.current,
+      isLocal: true,
+      name: name,
+      isCameraOn: isCameraOn,
+      isMicOn: isMicOn,
+    },
+    ...Object.entries(remoteStreams).map(([id, stream]) => ({
+      id,
+      stream,
+      isLocal: false,
+      name: `User ${id.substring(0, 4)}`,
+      isCameraOn: stream.getVideoTracks().length > 0 && stream.getVideoTracks()[0].enabled,
+      isMicOn: stream.getAudioTracks().length > 0 && stream.getAudioTracks()[0].enabled,
+    }))
+  ];
+
+  const participantCount = allParticipants.length;
+
+  const renderGrid = () => {
+    if (participantCount === 1) {
+      return (
+        <div className="h-full w-full p-4 flex items-center justify-center">
+          <ParticipantVideo participant={allParticipants[0]} className="w-full max-w-5xl aspect-video rounded-3xl" />
+        </div>
+      );
+    }
+    
+    if (participantCount === 2) {
+      return (
+        <div className="h-full w-full p-4 flex flex-col md:flex-row gap-4 items-center justify-center">
+          <ParticipantVideo participant={allParticipants[0]} className="w-full md:w-1/2 h-full max-h-[70vh] rounded-3xl" />
+          <ParticipantVideo participant={allParticipants[1]} className="w-full md:w-1/2 h-full max-h-[70vh] rounded-3xl" />
+        </div>
+      );
+    }
+
+    if (participantCount === 3) {
+      return (
+        <div className="h-full w-full p-4 flex flex-col gap-4 justify-center items-center">
+          <div className="flex w-full h-[calc(50%-0.5rem)] gap-4 justify-center max-w-6xl">
+            <ParticipantVideo participant={allParticipants[0]} className="w-1/2 h-full rounded-3xl" />
+            <ParticipantVideo participant={allParticipants[1]} className="w-1/2 h-full rounded-3xl" />
+          </div>
+          <div className="flex w-full h-[calc(50%-0.5rem)] gap-4 justify-center max-w-6xl">
+            <ParticipantVideo participant={allParticipants[2]} className="w-1/2 h-full rounded-3xl" />
+          </div>
+        </div>
+      );
+    }
+    
+    // 4 or more participants
+    return (
+      <div className="h-full w-full p-4 flex flex-col gap-4">
+        <div className="flex-1 w-full flex justify-center min-h-0">
+          <ParticipantVideo participant={allParticipants[0]} className="h-full w-full max-w-6xl rounded-3xl" />
+        </div>
+        <div className="h-32 sm:h-40 md:h-48 w-full flex gap-4 overflow-x-auto justify-center shrink-0 px-2">
+          {allParticipants.slice(1).map(p => (
+            <ParticipantVideo key={p.id} participant={p} className="h-full aspect-video shrink-0 rounded-2xl" />
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <main className="flex h-screen flex-col bg-[#F4F0E6] text-[#111111] overflow-hidden selection:bg-[#FF3300] selection:text-white">
-
+    <main className="flex h-screen flex-col bg-[#161618] text-white overflow-hidden font-display">
+      
       {/* Header */}
-      <header className="flex items-center justify-between border-b-[4px] border-black bg-white px-6 py-4 md:px-12 z-10 relative">
-        <h1 className="font-display text-3xl tracking-wide uppercase">
-          MeetFlow
-        </h1>
-
+      <header className="flex items-center justify-between px-6 py-4 z-10 bg-gradient-to-b from-black/50 to-transparent">
         <div className="flex items-center gap-4">
-          <div className="bg-black text-white px-4 py-2 font-bold uppercase tracking-wider text-sm">
-            Room: {roomId}
-          </div>
+          <button onClick={leaveMeeting} className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors">
+            <ArrowLeft size={20} />
+          </button>
+          <h1 className="font-semibold text-lg tracking-wide hidden sm:block">
+            Product Design Meeting
+          </h1>
+          <span className="bg-white/10 text-white/80 text-xs px-2 py-1 rounded-md sm:hidden">
+            {roomId}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3">
+           <div className="hidden sm:flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full text-sm">
+              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              {roomId}
+           </div>
+           <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-full text-sm font-medium transition-colors shadow-lg shadow-indigo-500/20">
+             <Share size={16} />
+             <span className="hidden sm:inline">Share Link</span>
+           </button>
         </div>
       </header>
 
-      {/* Video Area */}
-      <section className="flex flex-1 flex-col items-center justify-center p-4 md:p-8 relative z-0 min-h-0 w-full">
+      {/* Main Content Area */}
+      <div className="flex flex-1 min-h-0 w-full px-2 sm:px-4 pb-2 gap-4">
+        
+        {/* Video Grid */}
+        <section className="flex-1 relative z-0 flex items-center justify-center overflow-hidden">
+          {renderGrid()}
+        </section>
 
-        {/* Background Grid Pattern */}
-        <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '24px 24px' }}></div>
-
-        <div className={`relative w-full h-full max-w-[1400px] overflow-y-auto overflow-x-hidden border-[6px] border-black bg-black shadow-[12px_12px_0_0_rgba(0,0,0,1)] group rounded-3xl ${remoteCount >= 2 ? "grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-4 items-center" : "flex items-center justify-center"}`}>
-
-          {/* Remote Streams */}
-          {Object.entries(remoteStreams).map(([id, stream]) => (
-            <div key={id} className={`relative overflow-hidden bg-zinc-900 ${remoteCount === 1 ? "absolute inset-0 w-full h-full z-0" : "w-full aspect-video rounded-2xl border-[4px] border-black shadow-[8px_8px_0_0_rgba(0,0,0,1)]"}`}>
-              <video
-                autoPlay
-                playsInline
-                ref={(el) => {
-                  if (el) el.srcObject = stream;
-                }}
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute top-4 left-4 bg-white border-[2px] border-black px-3 py-1 text-sm font-bold uppercase shadow-[2px_2px_0_0_rgba(0,0,0,1)] z-10">
-                Remote User
-              </div>
+        {/* Sidebar */}
+        {isSidebarOpen && (
+          <aside className="w-80 bg-[#1F1F23] rounded-3xl overflow-hidden flex flex-col border border-white/5 shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-white/5">
+              <h2 className="font-semibold">{activeTab === 'chat' ? 'In-call Messages' : 'Participants'}</h2>
+              <button onClick={() => setIsSidebarOpen(false)} className="p-1 rounded-md hover:bg-white/10 transition-colors">
+                <X size={18} />
+              </button>
             </div>
-          ))}
-
-          {/* Local Stream */}
-          <div className={`relative overflow-hidden bg-black transition-all duration-300 ${
-            remoteCount === 0 ? "w-full h-full z-0" : 
-            remoteCount === 1 ? "absolute bottom-32 right-8 w-1/4 min-w-[200px] max-w-[320px] aspect-video z-20 border-[4px] border-white shadow-[8px_8px_0_0_rgba(255,255,255,1)] rounded-2xl" : 
-            "w-full aspect-video border-[4px] border-white shadow-[8px_8px_0_0_rgba(255,255,255,1)] rounded-2xl z-10"
-          }`}>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="h-full w-full object-cover"
-            />
-
-            {!isCameraOn && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#FF0055] text-black m-[-2px]">
-                {/* Decorative Geometric Elements */}
-                {remoteCount === 0 && (
-                  <div className="absolute top-6 left-6 flex gap-3 z-20">
-                    <div className="w-6 h-6 bg-black rounded-full"></div>
-                    <div className="w-6 h-6 bg-black rounded-full"></div>
-                    <div className="w-6 h-6 bg-black rounded-full"></div>
+            
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+              {activeTab === 'chat' ? (
+                <>
+                  <div className="flex gap-3">
+                     <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 shrink-0"></div>
+                     <div>
+                       <div className="text-sm font-medium">Maddison Beer</div>
+                       <div className="text-sm text-white/70 bg-white/5 p-2 rounded-lg rounded-tl-none mt-1">Hello Guyss👋<br/>Glad to see you again!</div>
+                     </div>
                   </div>
-                )}
-
-                <div className="text-center z-10">
-                  <div className={`mx-auto flex ${remoteCount > 0 ? "h-16 w-16 text-3xl" : "h-40 w-40 text-7xl"} items-center justify-center rounded-full bg-white font-display uppercase border-[4px] border-black shadow-[6px_6px_0_0_rgba(0,0,0,1)]`}>
-                    {name.charAt(0)}
+                  <div className="flex gap-3">
+                     <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-green-500 to-emerald-500 shrink-0"></div>
+                     <div>
+                       <div className="text-sm font-medium">Nanda Pradipto</div>
+                       <div className="text-sm text-white/70 bg-white/5 p-2 rounded-lg rounded-tl-none mt-1">Haii madison<br/>How are uu?</div>
+                     </div>
                   </div>
+                </>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {allParticipants.map(p => (
+                    <div key={p.id} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-xs font-semibold text-white">
+                           {p.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-sm font-medium">{p.name} {p.isLocal ? "(You)" : ""}</span>
+                      </div>
+                      <div className="flex gap-2 text-white/50">
+                        {p.isMicOn ? <Mic size={16} /> : <MicOff size={16} className="text-red-400" />}
+                        {p.isCameraOn ? <Video size={16} /> : <VideoOff size={16} className="text-red-400" />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-                  {remoteCount === 0 && (
-                    <p className="mt-10 font-display text-5xl uppercase tracking-wider bg-black text-white px-8 py-3 border-[4px] border-black -rotate-2 shadow-[8px_8px_0_0_rgba(0,0,0,1)]">
-                      {name}
-                    </p>
-                  )}
+            {activeTab === 'chat' && (
+              <div className="p-4 border-t border-white/5">
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    placeholder="Type a message..." 
+                    className="w-full bg-black/40 border border-white/10 rounded-full py-2.5 pl-4 pr-10 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                  <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-indigo-600 rounded-full hover:bg-indigo-700 transition-colors">
+                    <Send size={14} />
+                  </button>
                 </div>
               </div>
             )}
+          </aside>
+        )}
+      </div>
 
-            {/* User Name Badge */}
-            {isCameraOn && (
-              <div className={`absolute ${remoteCount > 0 ? "top-3 left-3 text-sm px-3 py-1" : "top-6 left-6 text-lg px-5 py-3"} bg-white border-[3px] border-black font-bold uppercase tracking-wider shadow-[4px_4px_0_0_rgba(0,0,0,1)] flex items-center gap-3 z-20`}>
-                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-black"></div>
-                {name} (You)
-              </div>
-            )}
-          </div>
+      {/* Floating Controls Bar */}
+      <div className="pb-6 pt-2 w-full flex justify-center z-10 px-4">
+        <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 bg-[#1F1F23]/90 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl overflow-x-auto">
+           <button
+             onClick={toggleMic}
+             className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full transition-all ${
+               isMicOn ? "bg-white/10 hover:bg-white/20 text-white" : "bg-red-500 hover:bg-red-600 text-white"
+             }`}
+           >
+             {isMicOn ? <Mic size={20} /> : <MicOff size={20} />}
+           </button>
+           
+           <button
+             onClick={toggleCamera}
+             className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full transition-all ${
+               isCameraOn ? "bg-white/10 hover:bg-white/20 text-white" : "bg-red-500 hover:bg-red-600 text-white"
+             }`}
+           >
+             {isCameraOn ? <Video size={20} /> : <VideoOff size={20} />}
+           </button>
 
-          {/* Floating Controls */}
-          <div className="absolute bottom-0 left-0 w-full flex items-center justify-center gap-6 p-8 z-30 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none">
-            <div className="pointer-events-auto flex items-center gap-6">
-              <button
-                onClick={toggleMic}
-                className={`flex h-16 w-16 items-center justify-center rounded-full border-[4px] border-black transition-all hover:scale-105 active:scale-95 shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 ${isMicOn
-                    ? "bg-white text-black"
-                    : "bg-[#FF3300] text-white"
-                  }`}
-              >
-                {isMicOn ? (
-                  <Mic size={28} strokeWidth={3} />
-                ) : (
-                  <MicOff size={28} strokeWidth={3} />
-                )}
-              </button>
+           <div className="w-px h-6 bg-white/10 mx-1 sm:mx-2 shrink-0"></div>
 
-              <button
-                onClick={toggleCamera}
-                className={`flex h-16 w-16 items-center justify-center rounded-full border-[4px] border-black transition-all hover:scale-105 active:scale-95 shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 ${isCameraOn
-                    ? "bg-white text-black"
-                    : "bg-[#0055FF] text-white"
-                  }`}
-              >
-                {isCameraOn ? (
-                  <Video size={28} strokeWidth={3} />
-                ) : (
-                  <VideoOff size={28} strokeWidth={3} />
-                )}
-              </button>
+           <button 
+             onClick={() => toggleSidebar('participants')}
+             className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full transition-all ${isSidebarOpen && activeTab === 'participants' ? 'bg-indigo-600 text-white' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+           >
+             <Users size={20} />
+           </button>
+           
+           <button 
+             onClick={() => toggleSidebar('chat')}
+             className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full transition-all ${isSidebarOpen && activeTab === 'chat' ? 'bg-indigo-600 text-white' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+           >
+             <MessageSquare size={20} />
+           </button>
 
-              <div className="h-10 w-1 bg-white/50 rounded-full mx-2 hidden sm:block"></div>
+           <button className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-all">
+             <MoreVertical size={20} />
+           </button>
 
-              <button
-                onClick={leaveMeeting}
-                className="flex items-center gap-3 h-16 px-8 items-center justify-center rounded-full border-[4px] border-black bg-black text-white hover:bg-[#FF3300] hover:text-white transition-colors font-bold uppercase tracking-widest shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1"
-              >
-                <PhoneOff size={24} strokeWidth={3} />
-                <span className="hidden sm:inline">Leave</span>
-              </button>
-            </div>
-          </div>
+           <div className="w-px h-6 bg-white/10 mx-1 sm:mx-2 shrink-0"></div>
 
+           <button
+             onClick={leaveMeeting}
+             className="flex items-center gap-2 h-10 sm:h-12 px-4 sm:px-6 shrink-0 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all font-medium"
+           >
+             <PhoneOff size={20} />
+             <span className="hidden sm:inline">Leave</span>
+           </button>
         </div>
-      </section>
+      </div>
     </main>
   );
 }
